@@ -52,6 +52,7 @@ var DEFAULTS = {
     community: 'community',
     weight: 'weight'
   },
+  randomness: 0.01,
   randomWalk: true,
   resolution: 1,
   rng: Math.random,
