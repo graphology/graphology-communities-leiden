@@ -87,6 +87,14 @@ function tieBreaker(bestCommunity, currentCommunity, targetCommunity, delta, bes
   return false;
 }
 
+function mergeNodesSubset() {
+
+}
+
+function refinePartition(index) {
+
+}
+
 function undirectedLeiden(detailed, graph, options) {
   var index = new UndirectedLouvainIndex(graph, {
     attributes: {

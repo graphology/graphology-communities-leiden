@@ -26,7 +26,7 @@ npm install graphology-communities-leiden
 
 ## Usage
 
-TODO...
+TODO... Reinstate linter.
 
 <!--
 Runs the Louvain algorithm to detect communities in the given graph. It works both for undirected & directed graph by using the relevant modularity computations.
