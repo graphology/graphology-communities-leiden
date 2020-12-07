@@ -131,7 +131,7 @@ function groupCommunities(index) {
   // var assert = require('assert');
   // var j, l;
 
-  // for (i = 0; i < index.C; i++) {
+  // for (i = 0; i < bounds.length - 1; i++) {
   //   for (j = bounds[i] + 1, l = bounds[i + 1]; j < l; j++) {
   //     assert.strictEqual(index.belongings[sorted[j]], index.belongings[sorted[j - 1]]);
   //   }
@@ -140,13 +140,49 @@ function groupCommunities(index) {
   return [bounds, sorted];
 }
 
-function mergeNodesSubset() {
+function mergeNodesSubset(index, nodes, start, stop) {
+  var totalNodeWeight = 0;
 
+  var i, n, l, j, ei, el, et, w;
+  var currentCommunity;
+
+  for (i = start; i < stop; i++) {
+    n = nodes[i];
+
+    currentCommunity = index.belongings[n];
+    ei = index.starts[n];
+    el = index.starts[n + 1];
+
+    for(; ei < el; ei++) {
+      et = index.neighborhood[ei];
+
+      // Only considering links from the same community
+      if (index.belongings[et] !== currentCommunity)
+        continue;
+
+      w = index.weights[et];
+      totalNodeWeight += w;
+    }
+
+    // console.log(n, totalNodeWeight);
+  }
 }
 
 function refinePartition(index) {
+
   // First we need to group by community
   var result = groupCommunities(index);
+  var bounds = result[0];
+  var nodes = result[1];
+
+  var i, l, start, stop, subpartition;
+
+  for (i = 0, l = bounds.length - 1; i < l; i++) {
+    start = bounds[i];
+    stop = bounds[i + 1];
+
+    subpartition = mergeNodesSubset(index, nodes, start, stop);
+  }
 }
 
 function undirectedLeiden(detailed, graph, options) {
@@ -315,7 +351,9 @@ function undirectedLeiden(detailed, graph, options) {
 
     // We continue working on the induced graph
     if (moveWasMade) {
+      console.time('refine');
       refinePartition(index);
+      console.timeEnd('refine');
       throw new Error('unimplemented');
       index.zoomOut();
     }
