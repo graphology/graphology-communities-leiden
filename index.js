@@ -147,12 +147,12 @@ function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
   var NodesPointerArray = index.counts.constructor;
 
   // Counters
+  // TODO: consider reusing those from an indexing standpoint
   var totalNodeWeight = 0;
   var clusterWeights = new WeightsArray(order);
   var nonSingletonClusters = new Uint8Array(order);
   var externalEdgeWeightPerCluster = new WeightsArray(order);
   var nodesOrder = new NodesPointerArray(order);
-  var edgeWeightPerCluster = new WeightsArray(order);
   var belongings = new NodesPointerArray(order);
 
   var communities = new SparseMap(order);
@@ -160,14 +160,13 @@ function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
 
   // Iteration variables
   var i, j, n, l, ei, el, et, w;
-  var currentCommunity;
+  var currentCommunity = index.belongings[nodes[start]];
 
   // Initializing counters
   for (j = 0, i = start; i < stop; i++, j++) {
     n = nodes[i];
     nodesOrder[j] = n;
     belongings[j] = j;
-    currentCommunity = index.belongings[n];
     ei = index.starts[n];
     el = index.starts[n + 1];
 
@@ -177,6 +176,7 @@ function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
       et = index.neighborhood[ei];
 
       // Only considering links from the same community
+      // TODO: need to recreate a sub neighorhood here...
       if (index.belongings[et] !== currentCommunity)
         continue;
 
@@ -193,7 +193,7 @@ function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
 
   for (s = 0; s < order; s++, ri++) {
     j = ri % l;
-    // TODO: is nodesOrder actually useful?
+    n = nodesOrder[j];
 
     // Removing node from its current cluster
     clusterWeights[j] = 0;
@@ -206,6 +206,24 @@ function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
     // If connectivity constraint is not satisfied, we can skip
     if (externalEdgeWeightPerCluster[j] < clusterWeights[j] * (totalNodeWeight - clusterWeights[j]) * resolution)
       continue
+
+    // Finding neighboring clusters (including the current one)
+    communities.clear();
+    communities.set(j, 0);
+
+    ei = index.starts[n];
+    el = index.starts[n + 1];
+
+    for (; ei < el; ei++) {
+      et = index.neighborhood[ei];
+
+      // Only considering links from the same community
+      if (index.belongings[et] !== currentCommunity)
+        continue;
+
+      // TODO: cannot continue without truncate neighborhood here...
+      // TODO: maybe rely on offset from start rather than reindexation
+    }
   }
 }
 
