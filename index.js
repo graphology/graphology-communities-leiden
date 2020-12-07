@@ -468,7 +468,6 @@ function directedLeiden(detailed, graph, options) {
  * @param  {string}      community          - Community node attribute name.
  * @param  {string}      weight             - Weight edge attribute name.
  * @param  {string}    deltaComputation   - Method to use to compute delta computations.
- * @param  {boolean}   fastLocalMoves     - Whether to use the fast local move optimization.
  * @param  {boolean}   randomWalk         - Whether to traverse the graph in random order.
  * @param  {number}    resolution         - Resolution parameter.
  * @param  {function}  rng                - RNG function to use.
