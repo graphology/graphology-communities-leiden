@@ -34,15 +34,20 @@
  * Communities ». Scientific Reports, vol. 9, no 1, décembre 2019, p. 5233.
  * DOI.org (Crossref), doi:10.1038/s41598-019-41695-z.
  * https://arxiv.org/abs/1810.08473
+ *
+ * [References]
+ * https://github.com/vtraag/gephi-leiden-plugin
+ * https://github.com/vtraag/leidenalg
  */
 var defaults = require('lodash/defaultsDeep'),
     isGraph = require('graphology-utils/is-graph'),
     inferType = require('graphology-utils/infer-type'),
+    typed = require('mnemonist/utils/typed-arrays'),
     SparseMap = require('mnemonist/sparse-map'),
     SparseQueueSet = require('mnemonist/sparse-queue-set'),
     createRandomIndex = require('pandemonium/random-index').createRandomIndex;
 
-var indices = require('graphology-indices/neighborhood/leiden');
+var indices = require('graphology-indices/neighborhood/louvain');
 
 var UndirectedLouvainIndex = indices.UndirectedLouvainIndex,
     DirectedLouvainIndex = indices.DirectedLouvainIndex;
@@ -88,12 +93,60 @@ function tieBreaker(bestCommunity, currentCommunity, targetCommunity, delta, bes
   return false;
 }
 
+// TODO: port to graphology-indices?
+// TODO: use in zoomOut?
+function groupCommunities(index) {
+  // To avoid relying on a multimap, we'll use counting sort
+  var PointerArray = typed.getPointerArray(index.C);
+
+  var offsets = new PointerArray(index.C);
+  var sorted = new PointerArray(index.C);
+  var bounds = new PointerArray(index.C - index.U + 1);
+
+  var n, i, c, b, o;
+
+  n = 0;
+  o = 0;
+
+  for (i = 0; i < index.C; i++) {
+    c = index.counts[i];
+
+    if (c !== 0) {
+      bounds[o++] = n;
+      n += c;
+      offsets[i] = n;
+    }
+  }
+
+  bounds[o] = n;
+
+  o = 0;
+
+  for (i = 0; i < index.C; i++) {
+    b = index.belongings[i];
+    o = --offsets[b];
+    sorted[o] = i;
+  }
+
+  // var assert = require('assert');
+  // var j, l;
+
+  // for (i = 0; i < index.C; i++) {
+  //   for (j = bounds[i] + 1, l = bounds[i + 1]; j < l; j++) {
+  //     assert.strictEqual(index.belongings[sorted[j]], index.belongings[sorted[j - 1]]);
+  //   }
+  // }
+
+  return [bounds, sorted];
+}
+
 function mergeNodesSubset() {
 
 }
 
 function refinePartition(index) {
-
+  // First we need to group by community
+  var result = groupCommunities(index);
 }
 
 function undirectedLeiden(detailed, graph, options) {
@@ -261,8 +314,11 @@ function undirectedLeiden(detailed, graph, options) {
     moves.push(currentMoves);
 
     // We continue working on the induced graph
-    if (moveWasMade)
+    if (moveWasMade) {
+      refinePartition(index);
+      throw new Error('unimplemented');
       index.zoomOut();
+    }
   }
 
   var results = {
@@ -477,6 +533,7 @@ function directedLeiden(detailed, graph, options) {
  * @param  {string}      community          - Community node attribute name.
  * @param  {string}      weight             - Weight edge attribute name.
  * @param  {string}    deltaComputation   - Method to use to compute delta computations.
+ * @param  {number}    randomness         - Randomness parameter.
  * @param  {boolean}   randomWalk         - Whether to traverse the graph in random order.
  * @param  {number}    resolution         - Resolution parameter.
  * @param  {function}  rng                - RNG function to use.
