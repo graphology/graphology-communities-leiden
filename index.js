@@ -1,6 +1,6 @@
 /**
  * Graphology Leiden Algorithm
- * =============================
+ * ============================
  *
  * JavaScript implementation of the Leiden community detection
  * algorithm for graphology.
@@ -42,7 +42,6 @@
 var defaults = require('lodash/defaultsDeep'),
     isGraph = require('graphology-utils/is-graph'),
     inferType = require('graphology-utils/infer-type'),
-    typed = require('mnemonist/utils/typed-arrays'),
     SparseMap = require('mnemonist/sparse-map'),
     SparseQueueSet = require('mnemonist/sparse-queue-set'),
     createRandomIndex = require('pandemonium/random-index').createRandomIndex;
@@ -97,11 +96,11 @@ function tieBreaker(bestCommunity, currentCommunity, targetCommunity, delta, bes
 // TODO: use in zoomOut?
 function groupCommunities(index) {
   // To avoid relying on a multimap, we'll use counting sort
-  var PointerArray = typed.getPointerArray(index.C);
+  var PointerArray = index.counts.constructor;
 
   var offsets = new PointerArray(index.C);
   var sorted = new PointerArray(index.C);
-  var bounds = new PointerArray(index.C - index.U + 1);
+  var bounds = new PointerArray(index.C - index.U + 1); // NOTE: could save up
 
   var n, i, c, b, o;
 
@@ -140,18 +139,39 @@ function groupCommunities(index) {
   return [bounds, sorted];
 }
 
-function mergeNodesSubset(index, nodes, start, stop) {
-  var totalNodeWeight = 0;
+function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
+  var order = stop - start;
+  var resolution = index.resolution;
 
-  var i, n, l, j, ei, el, et, w;
+  var WeightsArray = index.weights.constructor;
+  var NodesPointerArray = index.counts.constructor;
+
+  // Counters
+  var totalNodeWeight = 0;
+  var clusterWeights = new WeightsArray(order);
+  var nonSingletonClusters = new Uint8Array(order);
+  var externalEdgeWeightPerCluster = new WeightsArray(order);
+  var nodesOrder = new NodesPointerArray(order);
+  var edgeWeightPerCluster = new WeightsArray(order);
+  var belongings = new NodesPointerArray(order);
+
+  var communities = new SparseMap(order);
+  var cumulativeIncrement = new Float64Array(order);
+
+  // Iteration variables
+  var i, j, n, l, ei, el, et, w;
   var currentCommunity;
 
-  for (i = start; i < stop; i++) {
+  // Initializing counters
+  for (j = 0, i = start; i < stop; i++, j++) {
     n = nodes[i];
-
+    nodesOrder[j] = n;
+    belongings[j] = j;
     currentCommunity = index.belongings[n];
     ei = index.starts[n];
     el = index.starts[n + 1];
+
+    clusterWeights[j] += index.loops[n];
 
     for(; ei < el; ei++) {
       et = index.neighborhood[ei];
@@ -162,13 +182,34 @@ function mergeNodesSubset(index, nodes, start, stop) {
 
       w = index.weights[et];
       totalNodeWeight += w;
+      clusterWeights[j] += w;
+      externalEdgeWeightPerCluster[j] += w;
     }
+  }
 
-    // console.log(n, totalNodeWeight);
+  var s, ri;
+
+  ri = randomIndex(order);
+
+  for (s = 0; s < order; s++, ri++) {
+    j = ri % l;
+    // TODO: is nodesOrder actually useful?
+
+    // Removing node from its current cluster
+    clusterWeights[j] = 0;
+    externalEdgeWeightPerCluster[j] = 0;
+
+    // If node is not in a singleton anymore, we can skip
+    if (nonSingletonClusters[j] === 1)
+      continue;
+
+    // If connectivity constraint is not satisfied, we can skip
+    if (externalEdgeWeightPerCluster[j] < clusterWeights[j] * (totalNodeWeight - clusterWeights[j]) * resolution)
+      continue
   }
 }
 
-function refinePartition(index) {
+function refinePartition(randomIndex, index) {
 
   // First we need to group by community
   var result = groupCommunities(index);
@@ -181,7 +222,7 @@ function refinePartition(index) {
     start = bounds[i];
     stop = bounds[i + 1];
 
-    subpartition = mergeNodesSubset(index, nodes, start, stop);
+    subpartition = mergeNodesSubset(randomIndex, index, nodes, start, stop);
   }
 }
 
@@ -352,7 +393,7 @@ function undirectedLeiden(detailed, graph, options) {
     // We continue working on the induced graph
     if (moveWasMade) {
       console.time('refine');
-      refinePartition(index);
+      refinePartition(randomIndex, index);
       console.timeEnd('refine');
       throw new Error('unimplemented');
       index.zoomOut();
