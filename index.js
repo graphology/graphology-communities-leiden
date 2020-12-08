@@ -256,12 +256,7 @@ function undirectedLeiden(detailed, graph, options) {
 
     // We continue working on the induced graph
     if (moveWasMade) {
-      console.time('refine');
-      addenda.refinePartition();
-      console.log(addenda.belongings, addenda.C, index.C - index.U, addenda.randomness);
-      console.timeEnd('refine');
-      throw new Error('unimplemented');
-      index.zoomOut();
+      addenda.zoomOut();
     }
   }
 
@@ -492,6 +487,9 @@ function leiden(assign, detailed, graph, options) {
 
   if (type === 'mixed')
     throw new Error('graphology-communities-leiden: cannot run the algorithm on a true mixed graph.');
+
+  if (type === 'directed')
+    throw new Error('graphology-communities-leiden: not yet implemented for directed graphs.');
 
   // Attributes name
   options = defaults({}, options, DEFAULTS);

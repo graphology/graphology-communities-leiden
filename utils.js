@@ -359,7 +359,6 @@ UndirectedLeidenAddenda.prototype.split = function() {
 
 UndirectedLeidenAddenda.prototype.zoomOut = function() {
   var index = this.index;
-
   this.refinePartition();
   this.split();
 
@@ -369,6 +368,7 @@ UndirectedLeidenAddenda.prototype.zoomOut = function() {
 
   var i, j;
 
+  // TODO: adjust dendrogram?
   for (i = 0; i < this.macroCommunities.length; i++) {
     macro = this.macroCommunities[i];
     leader = newLabels[macro[0]];

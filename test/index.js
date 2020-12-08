@@ -3,15 +3,22 @@
  * =============================
  */
 var assert = require('chai').assert;
+var seedrandom = require('seedrandom');
 var Graph = require('graphology');
 var louvainIndices = require('graphology-indices/neighborhood/louvain');
 var leidenIndices = require('../utils.js');
 var mergeClique = require('graphology-utils/merge-clique');
+var modularity = require('graphology-metrics/modularity');
+var leiden = require('../');
 
 var UndirectedLouvainIndex = louvainIndices.UndirectedLouvainIndex;
 var UndirectedLeidenAddenda = leidenIndices.UndirectedLeidenAddenda;
 
 // var ARCTIC = require('./resources/arctic.json');
+
+function rng() {
+  return seedrandom('test');
+}
 
 function getDoubleCliqueGraph() {
   var graph = new Graph.UndirectedGraph();
@@ -104,6 +111,24 @@ describe('graphology-communities-leiden', function() {
 
       assert.strictEqual(index.C - index.U, 2);
       assert.strictEqual(index.level, 1);
+    });
+  });
+
+  describe('algorithm', function() {
+    it('should work for double clique.', function() {
+      var graph = getDoubleCliqueGraph();
+      var results = leiden.detailed(graph, {rng: rng()});
+
+      var naiveQ = modularity(graph, {
+        communities: {
+          0: 0,
+          1: 0,
+          2: 1,
+          3: 2,
+          4: 3,
+          5: 3
+        }
+      });
     });
   });
 });
