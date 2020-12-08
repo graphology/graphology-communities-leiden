@@ -53,6 +53,8 @@ var addWeightToCommunity = utils.addWeightToCommunity;
 var UndirectedLouvainIndex = indices.UndirectedLouvainIndex,
     DirectedLouvainIndex = indices.DirectedLouvainIndex;
 
+var UndirectedLeidenAddenda = utils.UndirectedLeidenAddenda;
+
 var DEFAULTS = {
   attributes: {
     community: 'community',
@@ -83,158 +85,6 @@ function tieBreaker(bestCommunity, currentCommunity, targetCommunity, delta, bes
   return false;
 }
 
-// TODO: port to graphology-indices?
-// TODO: use in zoomOut?
-function groupCommunities(index) {
-  // To avoid relying on a multimap, we'll use counting sort
-  var PointerArray = index.counts.constructor;
-
-  var offsets = new PointerArray(index.C);
-  var sorted = new PointerArray(index.C);
-  var bounds = new PointerArray(index.C - index.U + 1); // NOTE: could save up
-
-  var n, i, c, b, o;
-
-  n = 0;
-  o = 0;
-
-  for (i = 0; i < index.C; i++) {
-    c = index.counts[i];
-
-    if (c !== 0) {
-      bounds[o++] = n;
-      n += c;
-      offsets[i] = n;
-    }
-  }
-
-  bounds[o] = n;
-
-  o = 0;
-
-  for (i = 0; i < index.C; i++) {
-    b = index.belongings[i];
-    o = --offsets[b];
-    sorted[o] = i;
-  }
-
-  // var assert = require('assert');
-  // var j, l;
-
-  // for (i = 0; i < bounds.length - 1; i++) {
-  //   for (j = bounds[i] + 1, l = bounds[i + 1]; j < l; j++) {
-  //     assert.strictEqual(index.belongings[sorted[j]], index.belongings[sorted[j - 1]]);
-  //   }
-  // }
-
-  return [bounds, sorted];
-}
-
-function mergeNodesSubset(randomIndex, index, nodes, start, stop) {
-  var order = stop - start;
-  var resolution = index.resolution;
-
-  var WeightsArray = index.weights.constructor;
-  var NodesPointerArray = index.counts.constructor;
-
-  // Counters
-  // TODO: consider reusing those from an indexing standpoint
-  var totalNodeWeight = 0;
-  var clusterWeights = new WeightsArray(order);
-  var nonSingletonClusters = new Uint8Array(order);
-  var externalEdgeWeightPerCluster = new WeightsArray(order);
-  var nodesOrder = new NodesPointerArray(order);
-  var belongings = new NodesPointerArray(order);
-
-  var communities = new SparseMap(order);
-  var cumulativeIncrement = new Float64Array(order);
-
-  // Iteration variables
-  var i, j, n, l, ei, el, et, w;
-  var currentCommunity = index.belongings[nodes[start]];
-
-  // Initializing counters
-  for (j = 0, i = start; i < stop; i++, j++) {
-    n = nodes[i];
-    nodesOrder[j] = n;
-    belongings[j] = j;
-    ei = index.starts[n];
-    el = index.starts[n + 1];
-
-    clusterWeights[j] += index.loops[n];
-
-    for(; ei < el; ei++) {
-      et = index.neighborhood[ei];
-
-      // Only considering links from the same community
-      // TODO: need to recreate a sub neighorhood here...
-      if (index.belongings[et] !== currentCommunity)
-        continue;
-
-      w = index.weights[et];
-      totalNodeWeight += w;
-      clusterWeights[j] += w;
-      externalEdgeWeightPerCluster[j] += w;
-    }
-  }
-
-  var s, ri;
-
-  ri = randomIndex(order);
-
-  for (s = 0; s < order; s++, ri++) {
-    j = ri % l;
-    n = nodesOrder[j];
-
-    // Removing node from its current cluster
-    clusterWeights[j] = 0;
-    externalEdgeWeightPerCluster[j] = 0;
-
-    // If node is not in a singleton anymore, we can skip
-    if (nonSingletonClusters[j] === 1)
-      continue;
-
-    // If connectivity constraint is not satisfied, we can skip
-    if (externalEdgeWeightPerCluster[j] < clusterWeights[j] * (totalNodeWeight - clusterWeights[j]) * resolution)
-      continue
-
-    // Finding neighboring clusters (including the current one)
-    communities.clear();
-    communities.set(j, 0);
-
-    ei = index.starts[n];
-    el = index.starts[n + 1];
-
-    for (; ei < el; ei++) {
-      et = index.neighborhood[ei];
-
-      // Only considering links from the same community
-      if (index.belongings[et] !== currentCommunity)
-        continue;
-
-      // TODO: cannot continue without truncate neighborhood here...
-      // TODO: maybe rely on offset from start rather than reindexation
-    }
-  }
-}
-
-function refinePartition(randomIndex, index) {
-
-  // First we need to group by community
-  var result = groupCommunities(index);
-  var bounds = result[0];
-  var nodes = result[1];
-
-  var i, l, start, stop, subpartition;
-
-  for (i = 0, l = bounds.length - 1; i < l; i++) {
-    start = bounds[i];
-    stop = bounds[i + 1];
-
-    subpartition = mergeNodesSubset(randomIndex, index, nodes, start, stop);
-  }
-}
-
 function undirectedLeiden(detailed, graph, options) {
   var index = new UndirectedLouvainIndex(graph, {
     attributes: {
@@ -243,6 +93,11 @@ function undirectedLeiden(detailed, graph, options) {
     keepDendrogram: detailed,
     resolution: options.resolution,
     weighted: options.weighted
+  });
+
+  var addenda = new UndirectedLeidenAddenda(index, {
+    randomness: options.randomness,
+    rng: options.rng
   });
 
   var randomIndex = createRandomIndex(options.rng);
@@ -402,7 +257,8 @@ function undirectedLeiden(detailed, graph, options) {
     // We continue working on the induced graph
     if (moveWasMade) {
       console.time('refine');
-      refinePartition(randomIndex, index);
+      addenda.refinePartition();
+      console.log(addenda.belongings);
       console.timeEnd('refine');
       throw new Error('unimplemented');
       index.zoomOut();
