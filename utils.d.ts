@@ -17,9 +17,9 @@ export class UndirectedLeidenAddenda {
   communitiesOffsets: PointerArray;
   nodesSortedByCommunities: PointerArray;
   communitiesBounds: PointerArray;
-  clusterWeights: PointerArray;
-  nonSingletonClusters: PointerArray;
-  externalEdgeWeightPerCluster: PointerArray;
+  communityWeights: PointerArray;
+  nonSingleton: PointerArray;
+  externalEdgeWeightPerCommunity: PointerArray;
   belongings: PointerArray;
   neighboringCommunities: SparseMap<number>;
   cumulativeIncrement: Float64Array;

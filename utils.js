@@ -42,9 +42,9 @@ function UndirectedLeidenAddenda(index, options) {
   this.communitiesBounds = new NodesPointerArray(order + 1);
 
   // Used to merge nodes subsets
-  this.clusterWeights = new WeightsArray(order);
-  this.nonSingletonClusters = new Uint8Array(order);
-  this.externalEdgeWeightPerCluster = new WeightsArray(order);
+  this.communityWeights = new WeightsArray(order);
+  this.nonSingleton = new Uint8Array(order);
+  this.externalEdgeWeightPerCommunity = new WeightsArray(order);
   this.belongings = new NodesPointerArray(order);
   this.neighboringCommunities = new SparseMap(WeightsArray, order);
   this.cumulativeIncrement = new Float64Array(order);
@@ -117,10 +117,10 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     // Placing node in singleton
     this.belongings[i] = i;
-    this.nonSingletonClusters[i] = 0;
+    this.nonSingleton[i] = 0;
 
-    this.clusterWeights[i] = index.loops[i];
-    this.externalEdgeWeightPerCluster[i] = 0; // TODO: loops or not?
+    this.communityWeights[i] = index.loops[i];
+    this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
     totalNodeWeight += index.loops[i] / 2; // TODO: how to count loops?
 
     ei = index.starts[i];
@@ -135,8 +135,8 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
       w = index.weights[et];
       totalNodeWeight += w;
-      this.clusterWeights[i] += w;
-      this.externalEdgeWeightPerCluster[i] += w;
+      this.communityWeights[i] += w;
+      this.externalEdgeWeightPerCommunity[i] += w;
     }
   }
 
@@ -165,20 +165,20 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     i = start + (ri % order);
 
     // If node is not in a singleton anymore, we can skip it
-    if (this.nonSingletonClusters[i] === 1)
+    if (this.nonSingleton[i] === 1)
       continue;
 
     // If connectivity constraint is not satisfied, we can skip the node
     if (
-      this.externalEdgeWeightPerCluster[i] <
-      (this.clusterWeights[i] * (totalNodeWeight - this.clusterWeights[i]) * this.resolution)
+      this.externalEdgeWeightPerCommunity[i] <
+      (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
     )
 
-    // Removing node from its current cluster
-    this.clusterWeights[i] = 0;
-    this.externalEdgeWeightPerCluster[i] = 0;
+    // Removing node from its current community
+    this.communityWeights[i] = 0;
+    this.externalEdgeWeightPerCommunity[i] = 0;
 
-    // Finding neighboring clusters (including the current singleton one)
+    // Finding neighboring communitys (including the current singleton one)
     neighboringCommunities.clear();
     neighboringCommunities.set(i, 0);
 
@@ -206,7 +206,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       );
     }
 
-    // Checking neighboring clusters
+    // Checking neighboring communitys
     bestCommunity = i;
     maxQualityValueIncrement = 0;
     totalTransformedQualityValueIncrement = 0;
@@ -214,11 +214,11 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     for (ci = 0; ci < neighboringCommunities.size; ci++) {
       targetCommunity = neighboringCommunities.dense[ci];
       targetCommunityDegree = neighboringCommunities.vals[ci];
-      targetCommunityWeights = this.clusterWeights[targetCommunity];
+      targetCommunityWeights = this.communityWeights[targetCommunity];
 
       // Connectivity constraint
       if (
-        this.externalEdgeWeightPerCluster[targetCommunity] >=
+        this.externalEdgeWeightPerCommunity[targetCommunity] >=
         (targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution)
       ) {
         qualityValueIncrement = (
@@ -262,7 +262,13 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       chosenCommunity = bestCommunity;
     }
 
-    // console.log(chosenCommunity);
+    // Moving the node to its new community
+    this.communityWeights[chosenCommunity] += degree + index.loops[i];
+
+    if (chosenCommunity !== i) {
+      this.belongings[i] = chosenCommunity;
+      this.nonSingleton[chosenCommunity] = 1;
+    }
   }
 };
 
