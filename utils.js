@@ -44,6 +44,7 @@ function UndirectedLeidenAddenda(index, options) {
 
   // Used to merge nodes subsets
   this.communityWeights = new WeightsArray(order);
+  this.degrees = new WeightsArray(order);
   this.nonSingleton = new Uint8Array(order);
   this.externalEdgeWeightPerCommunity = new WeightsArray(order);
   this.belongings = new NodesPointerArray(order);
@@ -130,12 +131,14 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     for (; ei < el; ei++) {
       et = index.neighborhood[ei];
+      w = index.weights[et];
+
+      this.degrees[i] += w;
 
       // Only considering links inside of macro community
       if (index.belongings[et] !== currentMacroCommunity)
         continue;
 
-      w = index.weights[et];
       totalNodeWeight += w;
       this.externalEdgeWeightPerCommunity[i] += w;
     }
@@ -298,6 +301,35 @@ UndirectedLeidenAddenda.prototype.refinePartition = function() {
     stop = bounds[i + 1];
 
     this.mergeNodesSubset(start, stop);
+  }
+};
+
+UndirectedLeidenAddenda.prototype.split = function() {
+  var index = this.index;
+  var isolates = this.neighboringCommunities;
+
+  isolates.clear();
+
+  var i, community, isolated;
+
+  for (i = 0; i < index.C; i++) {
+    community = this.belongings[i];
+
+    if (i !== community)
+      continue;
+
+    isolated = index.isolate(i, this.degrees[i]);
+    isolates.set(community, isolated);
+  }
+
+  for (i = 0; i < index.C; i++) {
+    community = this.belongings[i];
+
+    if (i === community)
+      continue;
+
+    isolated = isolates.get(community);
+    index.move(i, this.degrees[i], isolated);
   }
 };
 

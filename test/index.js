@@ -55,6 +55,38 @@ describe('graphology-communities-leiden', function() {
 
       addenda.refinePartition();
       assert.strictEqual(addenda.C, 4);
+
+      addenda.split();
+
+      function compile(o) {
+        var a = [];
+
+        for (var k in o) {
+          a.push(Array.from(o[k]).join('§'));
+        }
+
+        return a.sort();
+      }
+
+      var mappingBeforeSplit = {};
+
+      addenda.belongings.forEach(function(c, i) {
+        if (!(c in mappingBeforeSplit))
+          mappingBeforeSplit[c] = new Set();
+        mappingBeforeSplit[c].add(i);
+      });
+      mappingBeforeSplit = compile(mappingBeforeSplit);
+
+      var mappingAfterSplit = {};
+
+      index.belongings.forEach(function(c, i) {
+        if (!(c in mappingAfterSplit))
+          mappingAfterSplit[c] = new Set();
+        mappingAfterSplit[c].add(i);
+      });
+      mappingAfterSplit = compile(mappingAfterSplit);
+
+      assert.deepStrictEqual(mappingBeforeSplit, mappingAfterSplit);
     });
 
     it.skip('should work with fig C1.', function() {
