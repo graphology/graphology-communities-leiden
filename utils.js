@@ -5,7 +5,18 @@
  * Miscellaneous utilities used by the Leiden algorithm.
  */
 var SparseMap = require('mnemonist/sparse-map');
-var createRandomIndex = require('pandemonium/random-index').createRandomIndex;
+var createRandom = require('pandemonium/random').createRandom;
+
+function addWeightToCommunity(map, community, weight) {
+  var currentWeight = map.get(community);
+
+  if (typeof currentWeight === 'undefined')
+    currentWeight = 0;
+
+  currentWeight += weight;
+
+  map.set(community, currentWeight);
+}
 
 function UndirectedLeidenAddenda(index, options) {
   options = options || {};
@@ -13,7 +24,7 @@ function UndirectedLeidenAddenda(index, options) {
   var rng = options.rng || Math.random;
 
   this.index = index;
-  this.randomIndex = createRandomIndex(rng);
+  this.random = createRandom(rng);
 
   var NodesPointerArray = index.counts.constructor;
   var WeightsArray = index.weights.constructor;
@@ -91,35 +102,95 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
   var index = this.index;
 
   var currentMacroCommunity = index.belongings[this.nodesSortedByCommunities[start]];
+  var neighboringCommunities = this.neighboringCommunities;
 
-  console.log(start, stop, currentMacroCommunity);
+  var totalNodeWeight = 0;
+
+  var i, w;
+  var ei, el, et;
+
+  // Initializing singletons
+  for (i = start; i < stop; i++) {
+
+    // Placing node in singleton
+    this.belongings[i] = i;
+    this.nonSingletonClusters[i] = 0;
+
+    this.clusterWeights[i] = index.loops[i];
+    this.externalEdgeWeightPerCluster[i] = 0; // TODO: loops or not?
+    totalNodeWeight += index.loops[i] / 2; // TODO: how to count loops?
+
+    ei = index.starts[i];
+    el = index.starts[i + 1];
+
+    for (; ei < el; ei++) {
+      et = index.neighborhood[ei];
+
+      // Only considering links inside of macro community
+      if (index.belongings[et] !== currentMacroCommunity)
+        continue;
+
+      w = index.weights[et];
+      totalNodeWeight += w;
+      this.clusterWeights[i] += w;
+      this.externalEdgeWeightPerCluster[i] += w;
+    }
+  }
+
+  var s, ri;
+  var order = stop - start;
+  var degree;
+
+  ri = this.random(start, stop - 1);
+
+  for (s = start; s < stop; s++, ri++) {
+    i = start + (ri % order);
+
+    // If node is not in a singleton anymore, we can skip it
+    if (this.nonSingletonClusters[i] === 1)
+      continue;
+
+    // If connectivity constraint is not satisfied, we can skip the node
+    if (
+      this.externalEdgeWeightPerCluster[i] <
+      (this.clusterWeights[i] * (totalNodeWeight - this.clusterWeights[i]) * this.resolution)
+    )
+
+    // Removing node from its current cluster
+    this.clusterWeights[i] = 0;
+    this.externalEdgeWeightPerCluster[i] = 0;
+
+    // Finding neighboring clusters (including the current singleton one)
+    neighboringCommunities.clear();
+    neighboringCommunities.set(i, 0);
+
+    degree = 0;
+
+    ei = index.starts[i];
+    el = index.starts[i + 1];
+
+    for (; ei < el; ei++) {
+      et = index.neighborhood[ei];
+
+      // NOTE: we could index not to repeat this, but I have a feeling this
+      // would not justify the spent memory
+      if (index.belongings[et] !== currentMacroCommunity)
+        continue;
+
+      w = index.weights[et];
+
+      degree += w;
+
+      addWeightToCommunity(
+        neighboringCommunities,
+        this.belongings[et],
+        w
+      );
+    }
+
+    // TODO: continue here...
+  }
 };
-
-// var currentCommunity = index.belongings[nodes[start]];
-
-// // Initializing counters
-// for (j = 0, i = start; i < stop; i++, j++) {
-//   n = nodes[i];
-//   nodesOrder[j] = n;
-//   belongings[j] = j;
-//   ei = index.starts[n];
-//   el = index.starts[n + 1];
-
-//   clusterWeights[j] += index.loops[n];
-
-//   for(; ei < el; ei++) {
-//     et = index.neighborhood[ei];
-
-//     // Only considering links from the same community
-//     // TODO: need to recreate a sub neighorhood here...
-//     if (index.belongings[et] !== currentCommunity)
-//       continue;
-
-//     w = index.weights[et];
-//     totalNodeWeight += w;
-//     clusterWeights[j] += w;
-//     externalEdgeWeightPerCluster[j] += w;
-//   }
 
 UndirectedLeidenAddenda.prototype.refinePartition = function() {
   this.groupByCommunities();
@@ -136,4 +207,5 @@ UndirectedLeidenAddenda.prototype.refinePartition = function() {
   }
 };
 
+exports.addWeightToCommunity = addWeightToCommunity;
 exports.UndirectedLeidenAddenda = UndirectedLeidenAddenda;

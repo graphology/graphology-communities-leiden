@@ -44,9 +44,11 @@ var defaults = require('lodash/defaultsDeep'),
     inferType = require('graphology-utils/infer-type'),
     SparseMap = require('mnemonist/sparse-map'),
     SparseQueueSet = require('mnemonist/sparse-queue-set'),
-    createRandomIndex = require('pandemonium/random-index').createRandomIndex;
+    createRandomIndex = require('pandemonium/random-index').createRandomIndex,
+    utils = require('./utils.js');
 
 var indices = require('graphology-indices/neighborhood/louvain');
+var addWeightToCommunity = utils.addWeightToCommunity;
 
 var UndirectedLouvainIndex = indices.UndirectedLouvainIndex,
     DirectedLouvainIndex = indices.DirectedLouvainIndex;
@@ -62,17 +64,6 @@ var DEFAULTS = {
   rng: Math.random,
   weighted: false
 };
-
-function addWeightToCommunity(map, community, weight) {
-  var currentWeight = map.get(community);
-
-  if (typeof currentWeight === 'undefined')
-    currentWeight = 0;
-
-  currentWeight += weight;
-
-  map.set(community, currentWeight);
-}
 
 var EPSILON = 1e-10;
 
