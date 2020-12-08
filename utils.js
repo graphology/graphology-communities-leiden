@@ -37,6 +37,7 @@ function UndirectedLeidenAddenda(index, options) {
 
   // Used to group nodes by communities
   this.B = 0;
+  this.C = 0;
   this.communitiesOffsets = new NodesPointerArray(order);
   this.nodesSortedByCommunities = new NodesPointerArray(order);
   this.communitiesBounds = new NodesPointerArray(order + 1);
@@ -79,6 +80,7 @@ UndirectedLeidenAddenda.prototype.groupByCommunities = function() {
   }
 
   this.B = index.C - index.U;
+  this.C = index.C;
 };
 
 UndirectedLeidenAddenda.prototype.communities = function() {
@@ -135,7 +137,6 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
       w = index.weights[et];
       totalNodeWeight += w;
-      this.communityWeights[i] += w;
       this.externalEdgeWeightPerCommunity[i] += w;
     }
   }
@@ -266,9 +267,21 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     // Moving the node to its new community
     this.communityWeights[chosenCommunity] += degree + index.loops[i];
 
+    for (ci = 0; ci < neighboringCommunities.size; ci++) {
+      targetCommunity = neighboringCommunities.dense[ci];
+
+      if (targetCommunity === chosenCommunity) {
+        this.externalEdgeWeightPerCommunity[chosenCommunity] -= degree;
+      }
+      else {
+        this.externalEdgeWeightPerCommunity[chosenCommunity] += degree;
+      }
+    }
+
     if (chosenCommunity !== i) {
       this.belongings[i] = chosenCommunity;
       this.nonSingleton[chosenCommunity] = 1;
+      this.C--;
     }
   }
 };

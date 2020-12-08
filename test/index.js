@@ -54,8 +54,7 @@ describe('graphology-communities-leiden', function() {
       index.expensiveMove(5, 4);
 
       addenda.refinePartition();
-
-      assert.deepStrictEqual(addenda.belongings, new Uint8Array([0, 1, 2, 3, 4, 5]));
+      assert.strictEqual(addenda.C, 4);
     });
 
     it.skip('should work with fig C1.', function() {
