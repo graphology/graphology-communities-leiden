@@ -123,12 +123,20 @@ describe('graphology-communities-leiden', function() {
         communities: {
           0: 0,
           1: 0,
-          2: 1,
-          3: 2,
-          4: 3,
-          5: 3
+          2: 0,
+          3: 1,
+          4: 1,
+          5: 1
         }
       });
+
+      assert.closeTo(naiveQ, results.modularity, 0.0001);
+
+      assert.strictEqual(results.communities[0], results.communities[1]);
+      assert.strictEqual(results.communities[1], results.communities[2]);
+
+      assert.strictEqual(results.communities[3], results.communities[4]);
+      assert.strictEqual(results.communities[4], results.communities[5]);
     });
   });
 });

@@ -364,17 +364,34 @@ UndirectedLeidenAddenda.prototype.zoomOut = function() {
 
   var newLabels = index.zoomOut();
 
-  var macro, leader;
+  var macro, leader, follower;
 
   var i, j;
 
-  // TODO: adjust dendrogram?
+  var moves = {};
+
   for (i = 0; i < this.macroCommunities.length; i++) {
     macro = this.macroCommunities[i];
     leader = newLabels[macro[0]];
 
-    for (j = 1; j < macro.length; j++)
-      index.expensiveMove(newLabels[macro[j]], leader);
+    for (j = 1; j < macro.length; j++) {
+      follower = newLabels[macro[j]];
+      index.expensiveMove(follower, leader);
+      moves[follower] = leader;
+    }
+  }
+
+  var mapping = index.keepDendrogram ?
+    index.dendrogram[index.dendrogram.length - 1] :
+    index.mapping;
+
+  var v;
+
+  for (i = 0; i < mapping.length; i++) {
+    v = moves[mapping[i]];
+
+    if (typeof v !== 'undefined')
+      mapping[i] = v;
   }
 };
 
