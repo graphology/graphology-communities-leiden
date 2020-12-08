@@ -324,6 +324,7 @@ UndirectedLeidenAddenda.prototype.split = function() {
 
   var i, community, isolated;
 
+  // First we isolate "leaders" in their own communities
   for (i = 0; i < index.C; i++) {
     community = this.belongings[i];
 
@@ -334,6 +335,7 @@ UndirectedLeidenAddenda.prototype.split = function() {
     isolates.set(community, isolated);
   }
 
+  // Then we move the "followers"
   for (i = 0; i < index.C; i++) {
     community = this.belongings[i];
 
@@ -343,9 +345,38 @@ UndirectedLeidenAddenda.prototype.split = function() {
     isolated = isolates.get(community);
     index.move(i, this.degrees[i], isolated);
   }
+
+  // Then we adjust the macro communities mapping accordingly
+  var j, macro;
+
+  for (i = 0; i < this.macroCommunities.length; i++) {
+    macro = this.macroCommunities[i];
+
+    for (j = 0; j < macro.length; j++)
+      macro[j] = isolates.get(macro[j]);
+  }
 };
 
-// UndirectedLeidenAddenda.prototype.zoomOut
+UndirectedLeidenAddenda.prototype.zoomOut = function() {
+  var index = this.index;
+
+  this.refinePartition();
+  this.split();
+
+  var newLabels = index.zoomOut();
+
+  var macro, leader;
+
+  var i, j;
+
+  for (i = 0; i < this.macroCommunities.length; i++) {
+    macro = this.macroCommunities[i];
+    leader = newLabels[macro[0]];
+
+    for (j = 1; j < macro.length; j++)
+      index.expensiveMove(newLabels[macro[j]], leader);
+  }
+};
 
 exports.addWeightToCommunity = addWeightToCommunity;
 exports.UndirectedLeidenAddenda = UndirectedLeidenAddenda;

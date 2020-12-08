@@ -89,8 +89,21 @@ describe('graphology-communities-leiden', function() {
       assert.deepStrictEqual(mappingBeforeSplit, mappingAfterSplit);
     });
 
-    it.skip('should work with fig C1.', function() {
+    it('should be possible to zoom out correctly.', function() {
+      var graph = getDoubleCliqueGraph();
 
+      var index = new UndirectedLouvainIndex(graph);
+      var addenda = new UndirectedLeidenAddenda(index);
+
+      index.expensiveMove(1, 0);
+      index.expensiveMove(2, 0);
+      index.expensiveMove(3, 4);
+      index.expensiveMove(5, 4);
+
+      addenda.zoomOut();
+
+      assert.strictEqual(index.C - index.U, 2);
+      assert.strictEqual(index.level, 1);
     });
   });
 });
