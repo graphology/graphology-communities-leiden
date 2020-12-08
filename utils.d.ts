@@ -10,6 +10,7 @@ type UndirectedLeidenAddendaOptions = {
 export class UndirectedLeidenAddenda {
   B: number;
   resolution: number;
+  randomness: number;
   index: UndirectedLouvainIndex;
 
   communitiesOffsets: PointerArray;

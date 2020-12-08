@@ -22,9 +22,11 @@ function UndirectedLeidenAddenda(index, options) {
   options = options || {};
 
   var rng = options.rng || Math.random;
+  var randomness = 'randomness' in options ? options.randomness : 0.01;
 
   this.index = index;
   this.random = createRandom(rng);
+  this.randomness = randomness;
 
   var NodesPointerArray = index.counts.constructor;
   var WeightsArray = index.weights.constructor;
@@ -137,9 +139,18 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
   }
 
-  var s, ri;
+  // Random iteration over nodes
+  var s, ri, ci;
   var order = stop - start;
-  var degree;
+
+  var degree,
+      bestCommunity,
+      qualityValueIncrement,
+      maxQualityValueIncrement,
+      totalTransformedQualityValueIncrement,
+      targetCommunity,
+      targetCommunityDegree,
+      targetCommunityWeights;
 
   ri = this.random(start, stop - 1);
 
@@ -188,7 +199,40 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       );
     }
 
+    // Checking neighboring clusters
+    bestCommunity = i;
+    maxQualityValueIncrement = 0;
+    totalTransformedQualityValueIncrement = 0;
+
+    for (ci = 0; ci < neighboringCommunities.size; ci++) {
+      targetCommunity = neighboringCommunities.dense[ci];
+      targetCommunityDegree = neighboringCommunities.vals[ci];
+      targetCommunityWeights = this.clusterWeights[targetCommunity];
+
+      // Connectivity constraint
+      if (
+        this.externalEdgeWeightPerCluster[targetCommunity] >=
+        (targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution)
+      ) {
+        qualityValueIncrement = (
+          targetCommunityDegree -
+          degree * targetCommunityWeights * this.resolution
+        );
+
+        if (qualityValueIncrement > maxQualityValueIncrement) {
+          bestCommunity = targetCommunity;
+          maxQualityValueIncrement = qualityValueIncrement;
+        }
+
+        if (qualityValueIncrement >= 0)
+          totalTransformedQualityValueIncrement += Math.exp(qualityValueIncrement / this.randomness);
+      }
+
+      this.cumulativeIncrement[targetCommunity] = totalTransformedQualityValueIncrement;
+    }
+
     // TODO: continue here...
+    // console.log(i, bestCommunity)
   }
 };
 
