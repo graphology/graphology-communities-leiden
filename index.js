@@ -260,6 +260,8 @@ function undirectedLeiden(detailed, graph, options) {
     }
   }
 
+  // TODO: perform a final index.zoomOut to renumber communities?
+
   var results = {
     index: index,
     deltaComputations: deltaComputations,
@@ -409,7 +411,6 @@ function directedLeiden(detailed, graph, options) {
 
       // Should we move the node?
       if (bestDelta < 0 || bestCommunity !== currentCommunity) {
-
         // NOTE: this is to allow nodes to move back to their own singleton
         // This code however only deals with modularity (e.g. the condition
         // about bestDelta < 0, which is the delta for moving back to
