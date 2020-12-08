@@ -50,6 +50,7 @@ function UndirectedLeidenAddenda(index, options) {
   this.belongings = new NodesPointerArray(order);
   this.neighboringCommunities = new SparseMap(WeightsArray, order);
   this.cumulativeIncrement = new Float64Array(order);
+  this.macroCommunities = null;
 }
 
 UndirectedLeidenAddenda.prototype.groupByCommunities = function() {
@@ -287,12 +288,22 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       this.C--;
     }
   }
+
+  var microCommunities = this.neighboringCommunities;
+  microCommunities.clear();
+
+  for (i = start; i < stop; i++)
+    microCommunities.set(this.belongings[i], 1);
+
+  return microCommunities.dense.slice(0, microCommunities.size);
 };
 
 UndirectedLeidenAddenda.prototype.refinePartition = function() {
   this.groupByCommunities();
 
-  var i, start, stop;
+  this.macroCommunities = new Array(this.B);
+
+  var i, start, stop, mapping;
 
   var bounds = this.communitiesBounds;
 
@@ -300,7 +311,8 @@ UndirectedLeidenAddenda.prototype.refinePartition = function() {
     start = bounds[i];
     stop = bounds[i + 1];
 
-    this.mergeNodesSubset(start, stop);
+    mapping = this.mergeNodesSubset(start, stop);
+    this.macroCommunities[i] = mapping;
   }
 };
 
@@ -332,6 +344,8 @@ UndirectedLeidenAddenda.prototype.split = function() {
     index.move(i, this.degrees[i], isolated);
   }
 };
+
+// UndirectedLeidenAddenda.prototype.zoomOut
 
 exports.addWeightToCommunity = addWeightToCommunity;
 exports.UndirectedLeidenAddenda = UndirectedLeidenAddenda;
