@@ -27,6 +27,7 @@ function UndirectedLeidenAddenda(index, options) {
   this.index = index;
   this.random = createRandom(rng);
   this.randomness = randomness;
+  this.rng = rng;
 
   var NodesPointerArray = index.counts.constructor;
   var WeightsArray = index.weights.constructor;
@@ -45,7 +46,7 @@ function UndirectedLeidenAddenda(index, options) {
   this.nonSingletonClusters = new Uint8Array(order);
   this.externalEdgeWeightPerCluster = new WeightsArray(order);
   this.belongings = new NodesPointerArray(order);
-  this.neighboringCommunities = new SparseMap(order);
+  this.neighboringCommunities = new SparseMap(WeightsArray, order);
   this.cumulativeIncrement = new Float64Array(order);
 }
 
@@ -152,6 +153,12 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       targetCommunityDegree,
       targetCommunityWeights;
 
+  var r,
+      lo,
+      hi,
+      mid,
+      chosenCommunity;
+
   ri = this.random(start, stop - 1);
 
   for (s = start; s < stop; s++, ri++) {
@@ -228,11 +235,34 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
           totalTransformedQualityValueIncrement += Math.exp(qualityValueIncrement / this.randomness);
       }
 
-      this.cumulativeIncrement[targetCommunity] = totalTransformedQualityValueIncrement;
+      this.cumulativeIncrement[ci] = totalTransformedQualityValueIncrement;
     }
 
-    // TODO: continue here...
-    // console.log(i, bestCommunity)
+    // Chosing the community in which to move the node
+    if (
+      totalTransformedQualityValueIncrement < Number.MAX_VALUE &&
+      totalTransformedQualityValueIncrement < Infinity
+    ) {
+      r = totalTransformedQualityValueIncrement * this.rng();
+      lo = -1;
+      hi = neighboringCommunities.size + 1; // TODO: adjust binary search?
+
+      while (lo < hi - 1) {
+        mid = (lo + hi) >>> 1;
+
+        if (this.cumulativeIncrement[mid] >= r)
+          hi = mid;
+        else
+          lo = mid;
+      }
+
+      chosenCommunity = neighboringCommunities.dense[hi];
+    }
+    else {
+      chosenCommunity = bestCommunity;
+    }
+
+    // console.log(chosenCommunity);
   }
 };
 

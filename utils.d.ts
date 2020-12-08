@@ -12,6 +12,7 @@ export class UndirectedLeidenAddenda {
   resolution: number;
   randomness: number;
   index: UndirectedLouvainIndex;
+  rng: () => number;
 
   communitiesOffsets: PointerArray;
   nodesSortedByCommunities: PointerArray;
