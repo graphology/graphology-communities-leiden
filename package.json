@@ -6,7 +6,8 @@
   "types": "index.d.ts",
   "files": [
     "*.d.ts",
-    "index.js"
+    "index.js",
+    "utils.js"
   ],
   "scripts": {
     "lint": "eslint *.js test/*.js",
