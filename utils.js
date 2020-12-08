@@ -173,6 +173,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       this.externalEdgeWeightPerCommunity[i] <
       (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
     )
+      continue;
 
     // Removing node from its current community
     this.communityWeights[i] = 0;
