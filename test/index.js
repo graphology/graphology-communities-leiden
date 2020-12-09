@@ -9,6 +9,7 @@ var louvainIndices = require('graphology-indices/neighborhood/louvain');
 var leidenIndices = require('../utils.js');
 var mergeClique = require('graphology-utils/merge-clique');
 var modularity = require('graphology-metrics/modularity');
+var generateFigC1Graph = require('./utils').generateFigC1Graph;
 var leiden = require('../');
 
 var UndirectedLouvainIndex = louvainIndices.UndirectedLouvainIndex;
@@ -137,6 +138,13 @@ describe('graphology-communities-leiden', function() {
 
       assert.strictEqual(results.communities[3], results.communities[4]);
       assert.strictEqual(results.communities[4], results.communities[5]);
+    });
+
+    it('should work with Fig. C1 graph.', function() {
+      var graph = generateFigC1Graph(Graph);
+      var results = leiden.detailed(graph, {rng: rng()});
+
+      console.log(results);
     });
   });
 });
