@@ -126,7 +126,6 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     this.communityWeights[i] = index.loops[i];
     this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
-    totalNodeWeight += index.loops[i] / 2; // TODO: how to count loops?
 
     ei = index.starts[i];
     el = index.starts[i + 1];
@@ -145,6 +144,8 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       this.externalEdgeWeightPerCommunity[i] += w;
     }
   }
+
+  totalNodeWeight /= 2;
 
   // Random iteration over nodes
   var s, ri, ci;
@@ -169,9 +170,12 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
   for (s = start; s < stop; s++, ri++) {
     i = start + (ri % order);
+    console.warn();
+    console.warn('processing ' + i)
 
     // If node is not in a singleton anymore, we can skip it
     if (this.nonSingleton[i] === 1) {
+      console.warn('skipping ' + i + ' because not in singleton')
       continue;
     }
 
@@ -180,6 +184,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       this.externalEdgeWeightPerCommunity[i] <
       (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
     ) {
+      console.warn('skipping ' + i + ' because of constraint')
       continue;
     }
 
@@ -215,6 +220,8 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       );
     }
 
+    console.warn('Neighboring ' + i, neighboringCommunities)
+
     // Checking neighboring communitys
     bestCommunity = i;
     maxQualityValueIncrement = 0;
@@ -235,6 +242,8 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
           degree * targetCommunityWeights * this.resolution
         );
 
+        console.warn('inc', qualityValueIncrement, 'for', targetCommunity);
+
         if (qualityValueIncrement > maxQualityValueIncrement) {
           bestCommunity = targetCommunity;
           maxQualityValueIncrement = qualityValueIncrement;
@@ -243,10 +252,13 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
         if (qualityValueIncrement >= 0)
           totalTransformedQualityValueIncrement += Math.exp(qualityValueIncrement / this.randomness);
       }
+      else {
+        console.warn('inc skip', targetCommunity, this.externalEdgeWeightPerCommunity[targetCommunity], targetCommunityDegree, targetCommunityWeights, totalNodeWeight, targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution);
+      }
 
       this.cumulativeIncrement[ci] = totalTransformedQualityValueIncrement;
     }
-
+    console.warn('cumsum', this.cumulativeIncrement.slice(0, neighboringCommunities.size))
     // Chosing the community in which to move the node
     if (
       totalTransformedQualityValueIncrement < Number.MAX_VALUE &&
@@ -287,9 +299,13 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     if (chosenCommunity !== i) {
+      console.warn(`merging ${i} with ${chosenCommunity}`);
       this.belongings[i] = chosenCommunity;
       this.nonSingleton[chosenCommunity] = 1;
       this.C--;
+    }
+    else {
+      console.warn('keeping ' + i + ' in singleton');
     }
   }
 
@@ -364,6 +380,7 @@ UndirectedLeidenAddenda.prototype.split = function() {
 UndirectedLeidenAddenda.prototype.zoomOut = function() {
   var index = this.index;
   this.refinePartition();
+  // throw 'stop';
   this.split();
 
   var newLabels = index.zoomOut();

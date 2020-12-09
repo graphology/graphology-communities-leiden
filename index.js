@@ -264,7 +264,7 @@ function undirectedLeiden(detailed, graph, options) {
 
     moves.push(currentMoves);
 
-    if ((index.C - index.U) < addenda.B) {
+    if (!addenda.onlySingletons()) {
 
       // We continue working on the induced graph
       addenda.zoomOut();
