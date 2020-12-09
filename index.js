@@ -215,7 +215,7 @@ function undirectedLeiden(detailed, graph, options) {
       //   console.log(i, poss);
       // }
 
-      if (bestDelta <= 0) {
+      if (bestDelta < 0) {
 
         // NOTE: this is to allow nodes to move back to their own singleton
         // This code however only deals with modularity (e.g. the condition
