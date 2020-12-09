@@ -148,7 +148,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
   }
 
-  totalNodeWeight /= 2;
+  // totalNodeWeight /= 2;
 
   // Random iteration over nodes
   var s, ri, ci;
@@ -247,7 +247,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       ) {
         qualityValueIncrement = (
           targetCommunityDegree -
-          (degree + index.loops[i]) * targetCommunityWeight * this.resolution / (2 * totalNodeWeight)
+          (degree + index.loops[i]) * targetCommunityWeight * this.resolution / totalNodeWeight
         );
 
         // console.warn('inc', qualityValueIncrement, 'for', targetCommunity, targetCommunityDegree, targetCommunityWeights);
