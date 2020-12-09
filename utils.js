@@ -107,7 +107,7 @@ UndirectedLeidenAddenda.prototype.communities = function() {
 
 UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
   var index = this.index;
-
+  // console.log()
   var currentMacroCommunity = index.belongings[this.nodesSortedByCommunities[start]];
   var neighboringCommunities = this.neighboringCommunities;
 
@@ -148,6 +148,10 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
   }
 
+  // TODO: this is hardly performant
+  var microDegrees = this.externalEdgeWeightPerCommunity.slice();
+  // console.log(microDegrees)
+
   // totalNodeWeight /= 2;
 
   // Random iteration over nodes
@@ -186,10 +190,11 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // If connectivity constraint is not satisfied, we can skip the node
+    // console.log(i, totalNodeWeight, this.externalEdgeWeightPerCommunity[i], this.communityWeights[i])
+    // console.log(i, this.externalEdgeWeightPerCommunity[i], (this.communityWeights[i] * (totalNodeWeight / 2 - this.communityWeights[i]) * this.resolution))
     if (
-      false &&
       this.externalEdgeWeightPerCommunity[i] <
-      (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
+      (this.communityWeights[i] * (totalNodeWeight / 2 - this.communityWeights[i]) * this.resolution)
     ) {
       // console.warn('skipping ' + i + ' because of constraint')
       continue;
@@ -241,9 +246,8 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
       // Connectivity constraint
       if (
-        true ||
         this.externalEdgeWeightPerCommunity[targetCommunity] >=
-        (targetCommunityWeight * (totalNodeWeight - targetCommunityWeight) * this.resolution)
+        (targetCommunityWeight * (totalNodeWeight / 2 - targetCommunityWeight) * this.resolution)
       ) {
         qualityValueIncrement = (
           targetCommunityDegree -
@@ -293,6 +297,29 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     // Moving the node to its new community
     this.communityWeights[chosenCommunity] += degree + index.loops[i];
+
+    ei = index.starts[i];
+    el = index.starts[i + 1];
+    // console.log('bef', this.externalEdgeWeightPerCommunity)
+    for (; ei < el; ei++) {
+      et = index.neighborhood[ei];
+      // console.log('MACRO', i, et, currentMacroCommunity)
+      // NOTE: we could index not to repeat this, but I have a feeling this
+      // would not justify the spent memory
+      if (index.belongings[et] !== currentMacroCommunity)
+        continue;
+      // console.log('micro', targetCommunity === chosenCommunity, microDegrees[et]);
+
+      targetCommunity = this.belongings[et];
+
+      if (targetCommunity === chosenCommunity) {
+        this.externalEdgeWeightPerCommunity[chosenCommunity] -= microDegrees[et];
+      }
+      else {
+        this.externalEdgeWeightPerCommunity[chosenCommunity] += microDegrees[et];
+      }
+    }
+    // console.log('aft', this.externalEdgeWeightPerCommunity)
 
     // for (ci = 0; ci < neighboringCommunities.size; ci++) {
     //   targetCommunity = neighboringCommunities.dense[ci];
@@ -344,6 +371,8 @@ UndirectedLeidenAddenda.prototype.refinePartition = function() {
     mapping = this.mergeNodesSubset(start, stop);
     this.macroCommunities[i] = mapping;
   }
+
+  // console.log(this.macroCommunities)
 };
 
 UndirectedLeidenAddenda.prototype.split = function() {
