@@ -122,6 +122,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     // Placing node in singleton
     this.belongings[i] = i;
     this.nonSingleton[i] = 0;
+    this.degrees[i] = 0;
 
     this.communityWeights[i] = 0;
     this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
