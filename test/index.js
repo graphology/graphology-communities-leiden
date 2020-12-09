@@ -162,7 +162,7 @@ describe('graphology-communities-leiden', function() {
 
     it('should work with Fig. C1 graph.', function() {
       var graph = generateFigC1Graph(Graph);
-      var results = leiden.detailed(graph, {rng: rng(), weighted: true});
+      var results = leiden.detailed(graph, {weighted: true});
 
       var naiveQ = modularity(graph, {
         communities: {

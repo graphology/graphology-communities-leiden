@@ -124,9 +124,9 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     this.nonSingleton[i] = 0;
     this.degrees[i] = 0;
 
-    this.communityWeights[i] = 0;
+    this.communityWeights[i] = index.loops[i];
     this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
-    totalNodeWeight += 0; // TODO: how to count loops?
+    totalNodeWeight += index.loops[i] / 2; // TODO: how to count loops?
 
     ei = index.starts[i];
     el = index.starts[i + 1];
@@ -182,10 +182,10 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       continue;
 
     // Removing node from its current community
-    this.communityWeights[i] = 0;
+    this.communityWeights[i] = index.loops[i];
     this.externalEdgeWeightPerCommunity[i] = 0;
 
-    // Finding neighboring communitys (including the current singleton one)
+    // Finding neighboring communities (including the current singleton one)
     neighboringCommunities.clear();
     neighboringCommunities.set(i, 0);
 
