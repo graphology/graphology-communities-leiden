@@ -132,7 +132,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     for (; ei < el; ei++) {
       et = index.neighborhood[ei];
-      w = index.weights[et];
+      w = index.weights[ei];
 
       this.degrees[i] += w;
 
@@ -201,7 +201,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       if (index.belongings[et] !== currentMacroCommunity)
         continue;
 
-      w = index.weights[et];
+      w = index.weights[ei];
 
       degree += w;
 
