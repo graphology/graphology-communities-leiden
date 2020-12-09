@@ -171,15 +171,17 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     i = start + (ri % order);
 
     // If node is not in a singleton anymore, we can skip it
-    if (this.nonSingleton[i] === 1)
+    if (this.nonSingleton[i] === 1) {
       continue;
+    }
 
     // If connectivity constraint is not satisfied, we can skip the node
     if (
       this.externalEdgeWeightPerCommunity[i] <
       (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
-    )
+    ) {
       continue;
+    }
 
     // Removing node from its current community
     this.communityWeights[i] = index.loops[i];
