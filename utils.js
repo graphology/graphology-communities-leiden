@@ -113,11 +113,12 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
   var totalNodeWeight = 0;
 
-  var i, w;
+  var i, j, w;
   var ei, el, et;
 
   // Initializing singletons
-  for (i = start; i < stop; i++) {
+  for (j = start; j < stop; j++) {
+    i = this.nodesSortedByCommunities[j];
 
     // Placing node in singleton
     this.belongings[i] = i;
@@ -169,7 +170,10 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
   ri = this.random(start, stop - 1);
 
   for (s = start; s < stop; s++, ri++) {
-    i = start + (ri % order);
+    j = start + (ri % order);
+
+    i = this.nodesSortedByCommunities[j];
+
     console.warn();
     console.warn('processing ' + i)
 
@@ -312,8 +316,10 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
   var microCommunities = this.neighboringCommunities;
   microCommunities.clear();
 
-  for (i = start; i < stop; i++)
+  for (j = start; j < stop; j++) {
+    i = this.nodesSortedByCommunities[j];
     microCommunities.set(this.belongings[i], 1);
+  }
 
   return microCommunities.dense.slice(0, microCommunities.size);
 };
