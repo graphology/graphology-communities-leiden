@@ -264,11 +264,14 @@ function undirectedLeiden(detailed, graph, options) {
 
     moves.push(currentMoves);
 
-    if (index.C <= l)
-      break;
+    if ((index.C - index.U) < addenda.B) {
 
-    // We continue working on the induced graph
-    addenda.zoomOut();
+      // We continue working on the induced graph
+      addenda.zoomOut();
+      continue;
+    }
+
+    break;
   }
 
   index.zoomOut();

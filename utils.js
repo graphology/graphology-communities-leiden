@@ -36,7 +36,7 @@ function UndirectedLeidenAddenda(index, options) {
   this.resolution = index.resolution;
 
   // Used to group nodes by communities
-  this.B = 0;
+  this.B = index.C;
   this.C = 0;
   this.communitiesOffsets = new NodesPointerArray(order);
   this.nodesSortedByCommunities = new NodesPointerArray(order);
@@ -372,7 +372,7 @@ UndirectedLeidenAddenda.prototype.zoomOut = function() {
 
   var i, j;
 
-  var moves = {};
+  // var moves = {};
 
   for (i = 0; i < this.macroCommunities.length; i++) {
     macro = this.macroCommunities[i];
@@ -381,22 +381,22 @@ UndirectedLeidenAddenda.prototype.zoomOut = function() {
     for (j = 1; j < macro.length; j++) {
       follower = newLabels[macro[j]];
       index.expensiveMove(follower, leader);
-      moves[follower] = leader;
+      // moves[follower] = leader;
     }
   }
 
-  var mapping = index.keepDendrogram ?
-    index.dendrogram[index.dendrogram.length - 1] :
-    index.mapping;
+  // var mapping = index.keepDendrogram ?
+  //   index.dendrogram[index.dendrogram.length - 1] :
+  //   index.mapping;
 
-  var v;
+  // var v;
 
-  for (i = 0; i < mapping.length; i++) {
-    v = moves[mapping[i]];
+  // for (i = 0; i < mapping.length; i++) {
+  //   v = moves[mapping[i]];
 
-    if (typeof v !== 'undefined')
-      mapping[i] = v;
-  }
+  //   if (typeof v !== 'undefined')
+  //     mapping[i] = v;
+  // }
 };
 
 UndirectedLeidenAddenda.prototype.onlySingletons = function() {
