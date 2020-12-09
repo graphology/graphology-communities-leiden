@@ -266,8 +266,8 @@ function undirectedLeiden(detailed, graph, options) {
           queue.enqueue(j);
       }
     }
-
-    if (addenda.onlySingletons() || !moveWasMade)
+    console.log(index, addenda.onlySingletons());
+    if (addenda.onlySingletons())
       break;
 
     moves.push(currentMoves);

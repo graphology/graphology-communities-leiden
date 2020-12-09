@@ -357,6 +357,8 @@ UndirectedLeidenAddenda.prototype.split = function() {
     for (j = 0; j < macro.length; j++)
       macro[j] = isolates.get(macro[j]);
   }
+
+  console.log(this.macroCommunities)
 };
 
 UndirectedLeidenAddenda.prototype.zoomOut = function() {
