@@ -50,8 +50,7 @@ var defaults = require('lodash/defaultsDeep'),
 var indices = require('graphology-indices/neighborhood/louvain');
 var addWeightToCommunity = utils.addWeightToCommunity;
 
-var UndirectedLouvainIndex = indices.UndirectedLouvainIndex,
-    DirectedLouvainIndex = indices.DirectedLouvainIndex;
+var UndirectedLouvainIndex = indices.UndirectedLouvainIndex;
 
 var UndirectedLeidenAddenda = utils.UndirectedLeidenAddenda;
 
@@ -183,7 +182,7 @@ function undirectedLeiden(detailed, graph, options) {
         currentCommunity
       );
       bestCommunity = currentCommunity;
-
+        var poss = [[currentCommunity, bestDelta, 'own', index.counts[currentCommunity] === 1]];
       for (ci = 0; ci < communities.size; ci++) {
         targetCommunity = communities.dense[ci];
 
@@ -200,7 +199,7 @@ function undirectedLeiden(detailed, graph, options) {
           targetCommunityDegree,
           targetCommunity
         );
-
+          poss.push([targetCommunity, delta, 'other']);
         deltaIsBetter = tieBreaker(
           bestCommunity,
           currentCommunity,
@@ -215,8 +214,12 @@ function undirectedLeiden(detailed, graph, options) {
         }
       }
 
-      // Should we move the node?
-      if (bestDelta < 0 || bestCommunity !== currentCommunity) {
+      // if (true) {
+      //   poss.push([null, 0, 'singleton'])
+      //   console.log(i, poss);
+      // }
+
+      if (bestDelta <= 0) {
 
         // NOTE: this is to allow nodes to move back to their own singleton
         // This code however only deals with modularity (e.g. the condition
@@ -228,27 +231,39 @@ function undirectedLeiden(detailed, graph, options) {
         // is indeed less than 0. To handle different metrics, one should
         // consider computing the delta for going back to singleton because
         // it might not be 0.
-        if (bestDelta < 0) {
-          index.isolate(i, degree);
+        bestCommunity = index.isolate(i, degree);
+
+        // If the node was already in a singleton community, we don't consider
+        // a move was made
+        if (bestCommunity === currentCommunity)
+          continue;
+      }
+      else {
+
+        // If no move was made, we continue to next node
+        if (bestCommunity === currentCommunity) {
+          continue;
         }
         else {
+
+          // Actually moving the node to a new community
           index.move(i, degree, bestCommunity);
         }
+      }
 
-        moveWasMade = true;
-        currentMoves++;
+      moveWasMade = true;
+      currentMoves++;
 
-        // Adding neighbors from other communities to the queue
-        start = index.starts[i];
-        end = index.starts[i + 1];
+      // Adding neighbors from other communities to the queue
+      start = index.starts[i];
+      end = index.starts[i + 1];
 
-        for (; start < end; start++) {
-          j = index.neighborhood[start];
-          targetCommunity = index.belongings[j];
+      for (; start < end; start++) {
+        j = index.neighborhood[start];
+        targetCommunity = index.belongings[j];
 
-          if (targetCommunity !== bestCommunity)
-            queue.enqueue(j);
-        }
+        if (targetCommunity !== bestCommunity)
+          queue.enqueue(j);
       }
     }
 
@@ -272,195 +287,195 @@ function undirectedLeiden(detailed, graph, options) {
   return results;
 }
 
-function directedLeiden(detailed, graph, options) {
-  var index = new DirectedLouvainIndex(graph, {
-    attributes: {
-      weight: options.attributes.weight
-    },
-    keepDendrogram: detailed,
-    resolution: options.resolution,
-    weighted: options.weighted
-  });
+// function directedLeiden(detailed, graph, options) {
+//   var index = new DirectedLouvainIndex(graph, {
+//     attributes: {
+//       weight: options.attributes.weight
+//     },
+//     keepDendrogram: detailed,
+//     resolution: options.resolution,
+//     weighted: options.weighted
+//   });
 
-  var randomIndex = createRandomIndex(options.rng);
+//   var randomIndex = createRandomIndex(options.rng);
 
-  // State variables
-  var moveWasMade = true;
+//   // State variables
+//   var moveWasMade = true;
 
-  // Communities
-  var currentCommunity, targetCommunity;
-  var communities = new SparseMap(Float64Array, index.C);
+//   // Communities
+//   var currentCommunity, targetCommunity;
+//   var communities = new SparseMap(Float64Array, index.C);
 
-  // Traversal
-  var queue = new SparseQueueSet(index.C),
-      start,
-      end,
-      offset,
-      out,
-      weight,
-      ci,
-      ri,
-      s,
-      i,
-      j,
-      l;
+//   // Traversal
+//   var queue = new SparseQueueSet(index.C),
+//       start,
+//       end,
+//       offset,
+//       out,
+//       weight,
+//       ci,
+//       ri,
+//       s,
+//       i,
+//       j,
+//       l;
 
-  // Metrics
-  var inDegree,
-      outDegree,
-      targetCommunityDegree;
+//   // Metrics
+//   var inDegree,
+//       outDegree,
+//       targetCommunityDegree;
 
-  // Moves
-  var bestCommunity,
-      bestDelta,
-      deltaIsBetter,
-      delta;
+//   // Moves
+//   var bestCommunity,
+//       bestDelta,
+//       deltaIsBetter,
+//       delta;
 
-  // Details
-  var deltaComputations = 0,
-      nodesVisited = 0,
-      moves = [],
-      currentMoves;
+//   // Details
+//   var deltaComputations = 0,
+//       nodesVisited = 0,
+//       moves = [],
+//       currentMoves;
 
-  while (moveWasMade) {
-    l = index.C;
+//   while (moveWasMade) {
+//     l = index.C;
 
-    moveWasMade = false;
-    currentMoves = 0;
+//     moveWasMade = false;
+//     currentMoves = 0;
 
-    // Traversal of the graph
-    ri = options.randomWalk ? randomIndex(l) : 0;
+//     // Traversal of the graph
+//     ri = options.randomWalk ? randomIndex(l) : 0;
 
-    for (s = 0; s < l; s++, ri++) {
-      i = ri % l;
-      queue.enqueue(i);
-    }
+//     for (s = 0; s < l; s++, ri++) {
+//       i = ri % l;
+//       queue.enqueue(i);
+//     }
 
-    while (queue.size !== 0) {
-      i = queue.dequeue();
-      nodesVisited++;
+//     while (queue.size !== 0) {
+//       i = queue.dequeue();
+//       nodesVisited++;
 
-      inDegree = 0;
-      outDegree = 0;
-      communities.clear();
+//       inDegree = 0;
+//       outDegree = 0;
+//       communities.clear();
 
-      currentCommunity = index.belongings[i];
+//       currentCommunity = index.belongings[i];
 
-      start = index.starts[i];
-      end = index.starts[i + 1];
-      offset = index.offsets[i];
+//       start = index.starts[i];
+//       end = index.starts[i + 1];
+//       offset = index.offsets[i];
 
-      // Traversing neighbors
-      for (; start < end; start++) {
-        out = start < offset;
-        j = index.neighborhood[start];
-        weight = index.weights[start];
+//       // Traversing neighbors
+//       for (; start < end; start++) {
+//         out = start < offset;
+//         j = index.neighborhood[start];
+//         weight = index.weights[start];
 
-        targetCommunity = index.belongings[j];
+//         targetCommunity = index.belongings[j];
 
-        // Incrementing metrics
-        if (out)
-          outDegree += weight;
-        else
-          inDegree += weight;
+//         // Incrementing metrics
+//         if (out)
+//           outDegree += weight;
+//         else
+//           inDegree += weight;
 
-        addWeightToCommunity(communities, targetCommunity, weight);
-      }
+//         addWeightToCommunity(communities, targetCommunity, weight);
+//       }
 
-      // Finding best community to move to
-      bestDelta = index.deltaWithOwnCommunity(
-        i,
-        inDegree,
-        outDegree,
-        communities.get(currentCommunity) || 0,
-        currentCommunity
-      );
-      bestCommunity = currentCommunity;
+//       // Finding best community to move to
+//       bestDelta = index.deltaWithOwnCommunity(
+//         i,
+//         inDegree,
+//         outDegree,
+//         communities.get(currentCommunity) || 0,
+//         currentCommunity
+//       );
+//       bestCommunity = currentCommunity;
 
-      for (ci = 0; ci < communities.size; ci++) {
-        targetCommunity = communities.dense[ci];
+//       for (ci = 0; ci < communities.size; ci++) {
+//         targetCommunity = communities.dense[ci];
 
-        if (targetCommunity === currentCommunity)
-          continue;
+//         if (targetCommunity === currentCommunity)
+//           continue;
 
-        targetCommunityDegree = communities.vals[ci];
+//         targetCommunityDegree = communities.vals[ci];
 
-        deltaComputations++;
+//         deltaComputations++;
 
-        delta = index.delta(
-          i,
-          inDegree,
-          outDegree,
-          targetCommunityDegree,
-          targetCommunity
-        );
+//         delta = index.delta(
+//           i,
+//           inDegree,
+//           outDegree,
+//           targetCommunityDegree,
+//           targetCommunity
+//         );
 
-        deltaIsBetter = tieBreaker(
-          bestCommunity,
-          currentCommunity,
-          targetCommunity,
-          delta,
-          bestDelta
-        );
+//         deltaIsBetter = tieBreaker(
+//           bestCommunity,
+//           currentCommunity,
+//           targetCommunity,
+//           delta,
+//           bestDelta
+//         );
 
-        if (deltaIsBetter) {
-          bestDelta = delta;
-          bestCommunity = targetCommunity;
-        }
-      }
+//         if (deltaIsBetter) {
+//           bestDelta = delta;
+//           bestCommunity = targetCommunity;
+//         }
+//       }
 
-      // Should we move the node?
-      if (bestDelta < 0 || bestCommunity !== currentCommunity) {
-        // NOTE: this is to allow nodes to move back to their own singleton
-        // This code however only deals with modularity (e.g. the condition
-        // about bestDelta < 0, which is the delta for moving back to
-        // singleton wrt. modularity). Indeed, rarely, the Louvain
-        // algorithm can produce such cases when a node would be better in
-        // a singleton that in its own community when considering self loops
-        // or a resolution != 1. In this case, delta with your own community
-        // is indeed less than 0. To handle different metrics, one should
-        // consider computing the delta for going back to singleton because
-        // it might not be 0.
-        if (bestDelta < 0) {
-          index.isolate(i, inDegree, outDegree);
-        }
-        else {
-          index.move(i, inDegree, outDegree, bestCommunity);
-        }
+//       // Should we move the node?
+//       if (bestDelta < 0 || bestCommunity !== currentCommunity) {
+//         // NOTE: this is to allow nodes to move back to their own singleton
+//         // This code however only deals with modularity (e.g. the condition
+//         // about bestDelta < 0, which is the delta for moving back to
+//         // singleton wrt. modularity). Indeed, rarely, the Louvain
+//         // algorithm can produce such cases when a node would be better in
+//         // a singleton that in its own community when considering self loops
+//         // or a resolution != 1. In this case, delta with your own community
+//         // is indeed less than 0. To handle different metrics, one should
+//         // consider computing the delta for going back to singleton because
+//         // it might not be 0.
+//         if (bestDelta < 0) {
+//           index.isolate(i, inDegree, outDegree);
+//         }
+//         else {
+//           index.move(i, inDegree, outDegree, bestCommunity);
+//         }
 
-        moveWasMade = true;
-        currentMoves++;
+//         moveWasMade = true;
+//         currentMoves++;
 
-        // Adding neighbors from other communities to the queue
-        start = index.starts[i];
-        end = index.starts[i + 1];
+//         // Adding neighbors from other communities to the queue
+//         start = index.starts[i];
+//         end = index.starts[i + 1];
 
-        for (; start < end; start++) {
-          j = index.neighborhood[start];
-          targetCommunity = index.belongings[j];
+//         for (; start < end; start++) {
+//           j = index.neighborhood[start];
+//           targetCommunity = index.belongings[j];
 
-          if (targetCommunity !== bestCommunity)
-            queue.enqueue(j);
-        }
-      }
-    }
+//           if (targetCommunity !== bestCommunity)
+//             queue.enqueue(j);
+//         }
+//       }
+//     }
 
-    moves.push(currentMoves);
+//     moves.push(currentMoves);
 
-    // We continue working on the induced graph
-    if (moveWasMade)
-      index.zoomOut();
-  }
+//     // We continue working on the induced graph
+//     if (moveWasMade)
+//       index.zoomOut();
+//   }
 
-  var results = {
-    index: index,
-    deltaComputations: deltaComputations,
-    nodesVisited: nodesVisited,
-    moves: moves
-  };
+//   var results = {
+//     index: index,
+//     deltaComputations: deltaComputations,
+//     nodesVisited: nodesVisited,
+//     moves: moves
+//   };
 
-  return results;
-}
+//   return results;
+// }
 
 /**
  * Function returning the communities mapping of the graph.
@@ -529,7 +544,8 @@ function leiden(assign, detailed, graph, options) {
     };
   }
 
-  var fn = type === 'undirected' ? undirectedLeiden : directedLeiden;
+  // var fn = type === 'undirected' ? undirectedLeiden : directedLeiden;
+  var fn = undirectedLeiden;
 
   var results = fn(detailed, graph, options);
 
