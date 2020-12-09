@@ -123,9 +123,9 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     this.belongings[i] = i;
     this.nonSingleton[i] = 0;
 
-    this.communityWeights[i] = index.loops[i];
+    this.communityWeights[i] = 0;
     this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
-    totalNodeWeight += index.loops[i] / 2; // TODO: how to count loops?
+    totalNodeWeight += 0; // TODO: how to count loops?
 
     ei = index.starts[i];
     el = index.starts[i + 1];
@@ -269,7 +269,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // Moving the node to its new community
-    this.communityWeights[chosenCommunity] += degree + index.loops[i];
+    this.communityWeights[chosenCommunity] += degree;
 
     for (ci = 0; ci < neighboringCommunities.size; ci++) {
       targetCommunity = neighboringCommunities.dense[ci];
@@ -393,6 +393,19 @@ UndirectedLeidenAddenda.prototype.zoomOut = function() {
     if (typeof v !== 'undefined')
       mapping[i] = v;
   }
+};
+
+UndirectedLeidenAddenda.prototype.onlySingletons = function() {
+  var index = this.index;
+
+  var i;
+
+  for (i = 0; i < index.C; i++) {
+    if (index.counts[i] > 1)
+      return false;
+  }
+
+  return true;
 };
 
 exports.addWeightToCommunity = addWeightToCommunity;

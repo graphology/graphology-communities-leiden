@@ -113,6 +113,26 @@ describe('graphology-communities-leiden', function() {
       assert.strictEqual(index.C - index.U, 2);
       assert.strictEqual(index.level, 1);
     });
+
+    it('should be possible to detect if every community is a singleton.', function() {
+      var graph = getDoubleCliqueGraph();
+
+      var index = new UndirectedLouvainIndex(graph);
+      var addenda = new UndirectedLeidenAddenda(index);
+
+      assert.strictEqual(addenda.onlySingletons(), true);
+
+      index.expensiveMove(1, 0);
+      index.expensiveMove(2, 0);
+      index.expensiveMove(3, 4);
+      index.expensiveMove(5, 4);
+
+      assert.strictEqual(addenda.onlySingletons(), false);
+
+      addenda.zoomOut();
+
+      assert.strictEqual(addenda.onlySingletons(), false);
+    });
   });
 
   describe('algorithm', function() {
@@ -140,7 +160,7 @@ describe('graphology-communities-leiden', function() {
       assert.strictEqual(results.communities[4], results.communities[5]);
     });
 
-    it('should work with Fig. C1 graph.', function() {
+    it.only('should work with Fig. C1 graph.', function() {
       var graph = generateFigC1Graph(Graph);
       var results = leiden.detailed(graph, {rng: rng()});
 

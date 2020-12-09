@@ -267,12 +267,14 @@ function undirectedLeiden(detailed, graph, options) {
       }
     }
 
+    if (addenda.onlySingletons() || !moveWasMade)
+      break;
+
     moves.push(currentMoves);
 
     // We continue working on the induced graph
-    if (moveWasMade) {
-      addenda.zoomOut();
-    }
+    moveWasMade = true;
+    addenda.zoomOut();
   }
 
   // TODO: perform a final index.zoomOut to renumber communities?
