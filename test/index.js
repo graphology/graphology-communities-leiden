@@ -17,8 +17,8 @@ var UndirectedLeidenAddenda = leidenIndices.UndirectedLeidenAddenda;
 
 // var ARCTIC = require('./resources/arctic.json');
 
-function rng() {
-  return seedrandom('test');
+function rng(seed) {
+  return seedrandom(seed || 'test');
 }
 
 function getDoubleCliqueGraph() {
@@ -162,7 +162,22 @@ describe('graphology-communities-leiden', function() {
 
     it.only('should work with Fig. C1 graph.', function() {
       var graph = generateFigC1Graph(Graph);
-      var results = leiden.detailed(graph, {rng: rng()});
+      var results = leiden.detailed(graph, {rng: rng(), weighted: true});
+
+      var naiveQ = modularity(graph, {
+        communities: {
+          0: 0,
+          2: 0,
+          3: 0,
+          4: 0,
+          1: 1,
+          5: 1,
+          6: 1,
+          7: 1
+        }
+      });
+
+      console.log(naiveQ);
 
       console.log(results);
     });

@@ -101,9 +101,6 @@ function undirectedLeiden(detailed, graph, options) {
 
   var randomIndex = createRandomIndex(options.rng);
 
-  // State variables
-  var moveWasMade = true;
-
   // Communities
   var currentCommunity, targetCommunity;
   var communities = new SparseMap(Float64Array, index.C);
@@ -136,10 +133,9 @@ function undirectedLeiden(detailed, graph, options) {
       moves = [],
       currentMoves;
 
-  while (moveWasMade) {
+  while (true) {
     l = index.C;
 
-    moveWasMade = false;
     currentMoves = 0;
 
     // Traversal of the graph
@@ -251,7 +247,6 @@ function undirectedLeiden(detailed, graph, options) {
         }
       }
 
-      moveWasMade = true;
       currentMoves++;
 
       // Adding neighbors from other communities to the queue
@@ -266,14 +261,14 @@ function undirectedLeiden(detailed, graph, options) {
           queue.enqueue(j);
       }
     }
-    console.log(index, addenda.onlySingletons());
-    if (addenda.onlySingletons())
+
+    // If we could not produce more communities
+    if (addenda.B === index.C - index.U)
       break;
 
     moves.push(currentMoves);
 
     // We continue working on the induced graph
-    moveWasMade = true;
     addenda.zoomOut();
   }
 
@@ -565,7 +560,7 @@ function leiden(assign, detailed, graph, options) {
 
   // Detailed output
   var output = {
-    count: index.C,
+    count: index.C - index.U,
     deltaComputations: results.deltaComputations,
     dendrogram: index.dendrogram,
     level: index.level,
