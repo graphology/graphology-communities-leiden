@@ -156,6 +156,8 @@ describe('graphology-communities-leiden', function() {
         }
       });
 
+      console.log(results)
+
       assert.closeTo(naiveQ, results.modularity, 0.0001);
 
       assert.strictEqual(results.communities[0], results.communities[1]);

@@ -189,7 +189,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // Removing node from its current community
-    this.communityWeights[i] = index.loops[i];
+    this.communityWeights[i] = 0;
     this.externalEdgeWeightPerCommunity[i] = 0;
 
     // Finding neighboring communities (including the current singleton one)
@@ -239,7 +239,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       ) {
         qualityValueIncrement = (
           targetCommunityDegree -
-          degree * targetCommunityWeights * this.resolution
+          (degree + index.loops[i]) * targetCommunityWeights * this.resolution
         );
 
         console.warn('inc', qualityValueIncrement, 'for', targetCommunity);
@@ -284,7 +284,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // Moving the node to its new community
-    this.communityWeights[chosenCommunity] += degree;
+    this.communityWeights[chosenCommunity] += degree + index.loops[i];
 
     for (ci = 0; ci < neighboringCommunities.size; ci++) {
       targetCommunity = neighboringCommunities.dense[ci];
