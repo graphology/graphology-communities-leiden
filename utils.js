@@ -274,12 +274,13 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     for (ci = 0; ci < neighboringCommunities.size; ci++) {
       targetCommunity = neighboringCommunities.dense[ci];
+      targetCommunityDegree = neighboringCommunities.vals[ci];
 
       if (targetCommunity === chosenCommunity) {
-        this.externalEdgeWeightPerCommunity[chosenCommunity] -= degree;
+        this.externalEdgeWeightPerCommunity[chosenCommunity] -= targetCommunityDegree;
       }
       else {
-        this.externalEdgeWeightPerCommunity[chosenCommunity] += degree;
+        this.externalEdgeWeightPerCommunity[chosenCommunity] += targetCommunityDegree;
       }
     }
 
