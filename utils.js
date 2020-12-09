@@ -351,7 +351,7 @@ UndirectedLeidenAddenda.prototype.split = function() {
     if (i !== community)
       continue;
 
-    isolated = index.expensiveIsolate(i);
+    isolated = index.isolate(i, this.degrees[i]);
     isolates.set(community, isolated);
   }
 
@@ -363,7 +363,7 @@ UndirectedLeidenAddenda.prototype.split = function() {
       continue;
 
     isolated = isolates.get(community);
-    index.expensiveMove(i, isolated);
+    index.move(i, this.degrees[i], isolated);
   }
 
   // Then we adjust the macro communities mapping accordingly
