@@ -133,7 +133,7 @@ function undirectedLeiden(detailed, graph, options) {
       moves = [],
       currentMoves;
 
-  do {
+  while (true) {
     l = index.C;
 
     currentMoves = 0;
@@ -264,10 +264,14 @@ function undirectedLeiden(detailed, graph, options) {
 
     moves.push(currentMoves);
 
+    if (addenda.B <= index.C - index.U)
+      break;
+
     // We continue working on the induced graph
     addenda.zoomOut();
+  }
 
-  } while (addenda.B !== index.C - index.U);
+  index.zoomOut();
 
   var results = {
     index: index,
@@ -555,7 +559,7 @@ function leiden(assign, detailed, graph, options) {
 
   // Detailed output
   var output = {
-    count: index.C - index.U,
+    count: index.C,
     deltaComputations: results.deltaComputations,
     dendrogram: index.dendrogram,
     level: index.level,
