@@ -133,7 +133,7 @@ function undirectedLeiden(detailed, graph, options) {
       moves = [],
       currentMoves;
 
-  while (true) {
+  do {
     l = index.C;
 
     currentMoves = 0;
@@ -262,17 +262,12 @@ function undirectedLeiden(detailed, graph, options) {
       }
     }
 
-    // If we could not produce more communities
-    if (addenda.B === index.C - index.U)
-      break;
-
     moves.push(currentMoves);
 
     // We continue working on the induced graph
     addenda.zoomOut();
-  }
 
-  // TODO: perform a final index.zoomOut to renumber communities?
+  } while (addenda.B !== index.C - index.U);
 
   var results = {
     index: index,

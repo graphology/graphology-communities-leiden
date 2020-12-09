@@ -160,7 +160,7 @@ describe('graphology-communities-leiden', function() {
       assert.strictEqual(results.communities[4], results.communities[5]);
     });
 
-    it.only('should work with Fig. C1 graph.', function() {
+    it('should work with Fig. C1 graph.', function() {
       var graph = generateFigC1Graph(Graph);
       var results = leiden.detailed(graph, {rng: rng(), weighted: true});
 
