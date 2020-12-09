@@ -141,7 +141,7 @@ describe('graphology-communities-leiden', function() {
   });
 
   describe('algorithm', function() {
-    it.only('should work for double clique.', function() {
+    it('should work for double clique.', function() {
       var graph = getDoubleCliqueGraph();
       var results = leiden.detailed(graph, {rng: rng()});
 
@@ -167,7 +167,7 @@ describe('graphology-communities-leiden', function() {
       assert.strictEqual(results.communities[4], results.communities[5]);
     });
 
-    it('should work with Fig. C1 graph.', function() {
+    it.only('should work with Fig. C1 graph.', function() {
       var graph = generateFigC1Graph(Graph);
       var results = leiden.detailed(graph, {weighted: true});
 

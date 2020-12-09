@@ -176,12 +176,12 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     i = this.nodesSortedByCommunities[j];
 
-    console.warn();
-    console.warn('processing ' + i)
+    // console.warn();
+    // console.warn('processing ' + i)
 
     // If node is not in a singleton anymore, we can skip it
     if (this.nonSingleton[i] === 1) {
-      console.warn('skipping ' + i + ' because not in singleton')
+      // console.warn('skipping ' + i + ' because not in singleton')
       continue;
     }
 
@@ -191,7 +191,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       this.externalEdgeWeightPerCommunity[i] <
       (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
     ) {
-      console.warn('skipping ' + i + ' because of constraint')
+      // console.warn('skipping ' + i + ' because of constraint')
       continue;
     }
 
@@ -227,7 +227,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
       );
     }
 
-    console.warn('Neighboring ' + i, neighboringCommunities)
+    // console.warn('Neighboring ' + i, neighboringCommunities)
 
     // Checking neighboring communitys
     bestCommunity = i;
@@ -250,7 +250,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
           (degree + index.loops[i]) * targetCommunityWeights * this.resolution / (2 * totalNodeWeight)
         );
 
-        console.warn('inc', qualityValueIncrement, 'for', targetCommunity, targetCommunityDegree, targetCommunityWeights);
+        // console.warn('inc', qualityValueIncrement, 'for', targetCommunity, targetCommunityDegree, targetCommunityWeights);
 
         if (qualityValueIncrement > maxQualityValueIncrement) {
           bestCommunity = targetCommunity;
@@ -261,12 +261,12 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
           totalTransformedQualityValueIncrement += Math.exp(qualityValueIncrement / this.randomness);
       }
       else {
-        console.warn('inc skip', targetCommunity, this.externalEdgeWeightPerCommunity[targetCommunity], targetCommunityDegree, targetCommunityWeights, totalNodeWeight, targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution);
+        // console.warn('inc skip', targetCommunity, this.externalEdgeWeightPerCommunity[targetCommunity], targetCommunityDegree, targetCommunityWeights, totalNodeWeight, targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution);
       }
 
       this.cumulativeIncrement[ci] = totalTransformedQualityValueIncrement;
     }
-    console.warn('cumsum', this.cumulativeIncrement.slice(0, neighboringCommunities.size))
+    // console.warn('cumsum', this.cumulativeIncrement.slice(0, neighboringCommunities.size))
     // Chosing the community in which to move the node
     if (
       totalTransformedQualityValueIncrement < Number.MAX_VALUE &&
@@ -307,13 +307,13 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     // }
 
     if (chosenCommunity !== i) {
-      console.warn(`merging ${i} with ${chosenCommunity}`);
+      // console.warn(`merging ${i} with ${chosenCommunity}`);
       this.belongings[i] = chosenCommunity;
       this.nonSingleton[chosenCommunity] = 1;
       this.C--;
     }
     else {
-      console.warn('keeping ' + i + ' in singleton');
+      // console.warn('keeping ' + i + ' in singleton');
     }
   }
 
