@@ -264,7 +264,7 @@ function undirectedLeiden(detailed, graph, options) {
 
     moves.push(currentMoves);
 
-    if (addenda.B <= index.C - index.U)
+    if (index.C <= l)
       break;
 
     // We continue working on the induced graph
