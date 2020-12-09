@@ -196,7 +196,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // Removing node from its current community
-    this.communityWeights[i] = index.loops[i];
+    this.communityWeights[i] = 0;
     this.externalEdgeWeightPerCommunity[i] = 0;
 
     // Finding neighboring communities (including the current singleton one)
