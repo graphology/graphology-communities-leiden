@@ -274,7 +274,8 @@ function undirectedLeiden(detailed, graph, options) {
     break;
   }
 
-  index.zoomOut();
+  // TODO: do we need to zoom out one last time + adjust dendrogram in addenda.zoomOut?
+  // index.zoomOut();
 
   var results = {
     index: index,

@@ -124,6 +124,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     this.belongings[i] = i;
     this.nonSingleton[i] = 0;
     this.degrees[i] = 0;
+    totalNodeWeight += index.loops[i] / 2;
 
     this.communityWeights[i] = index.loops[i];
     this.externalEdgeWeightPerCommunity[i] = 0; // TODO: loops or not?
@@ -143,6 +144,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
       totalNodeWeight += w;
       this.externalEdgeWeightPerCommunity[i] += w;
+      this.communityWeights[i] += w;
     }
   }
 
@@ -185,6 +187,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
     // If connectivity constraint is not satisfied, we can skip the node
     if (
+      false &&
       this.externalEdgeWeightPerCommunity[i] <
       (this.communityWeights[i] * (totalNodeWeight - this.communityWeights[i]) * this.resolution)
     ) {
@@ -193,7 +196,7 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     }
 
     // Removing node from its current community
-    this.communityWeights[i] = 0;
+    this.communityWeights[i] = index.loops[i];
     this.externalEdgeWeightPerCommunity[i] = 0;
 
     // Finding neighboring communities (including the current singleton one)
@@ -238,15 +241,16 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
 
       // Connectivity constraint
       if (
+        true ||
         this.externalEdgeWeightPerCommunity[targetCommunity] >=
         (targetCommunityWeights * (totalNodeWeight - targetCommunityWeights) * this.resolution)
       ) {
         qualityValueIncrement = (
           targetCommunityDegree -
-          (degree + index.loops[i]) * targetCommunityWeights * this.resolution
+          (degree + index.loops[i]) * targetCommunityWeights * this.resolution / (2 * totalNodeWeight)
         );
 
-        console.warn('inc', qualityValueIncrement, 'for', targetCommunity);
+        console.warn('inc', qualityValueIncrement, 'for', targetCommunity, targetCommunityDegree, targetCommunityWeights);
 
         if (qualityValueIncrement > maxQualityValueIncrement) {
           bestCommunity = targetCommunity;
@@ -290,17 +294,17 @@ UndirectedLeidenAddenda.prototype.mergeNodesSubset = function(start, stop) {
     // Moving the node to its new community
     this.communityWeights[chosenCommunity] += degree + index.loops[i];
 
-    for (ci = 0; ci < neighboringCommunities.size; ci++) {
-      targetCommunity = neighboringCommunities.dense[ci];
-      targetCommunityDegree = neighboringCommunities.vals[ci];
+    // for (ci = 0; ci < neighboringCommunities.size; ci++) {
+    //   targetCommunity = neighboringCommunities.dense[ci];
+    //   targetCommunityDegree = neighboringCommunities.vals[ci];
 
-      if (targetCommunity === chosenCommunity) {
-        this.externalEdgeWeightPerCommunity[chosenCommunity] -= targetCommunityDegree;
-      }
-      else {
-        this.externalEdgeWeightPerCommunity[chosenCommunity] += targetCommunityDegree;
-      }
-    }
+    //   if (targetCommunity === chosenCommunity) {
+    //     this.externalEdgeWeightPerCommunity[chosenCommunity] -= targetCommunityDegree;
+    //   }
+    //   else {
+    //     this.externalEdgeWeightPerCommunity[chosenCommunity] += targetCommunityDegree;
+    //   }
+    // }
 
     if (chosenCommunity !== i) {
       console.warn(`merging ${i} with ${chosenCommunity}`);
