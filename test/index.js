@@ -108,8 +108,13 @@ describe('graphology-communities-leiden', function() {
       index.expensiveMove(3, 4);
       index.expensiveMove(5, 4);
 
+      var qBefore = index.modularity();
+
       addenda.zoomOut();
 
+      var qAfter = index.modularity();
+
+      assert.closeTo(qBefore, qAfter, 0.00001);
       assert.strictEqual(index.C - index.U, 2);
       assert.strictEqual(index.level, 1);
     });
